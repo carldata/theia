@@ -11,7 +11,7 @@ and check if the response equals the expected value.
  
  ```bash
 sbt assembly
-java -jar target/scala-2.12/theia-assembly-0.1.0.jar 
+java -jar target/scala-2.12/theia.jar 
  ```
  
 # Join in!
