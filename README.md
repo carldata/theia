@@ -2,9 +2,7 @@
 
 [![Build status](https://travis-ci.org/carldata/theia.svg?branch=master)](https://travis-ci.org/carldata/theia)
 
-Application for testing services connected to the Kafka.
-Base on tescases defined in testcase folder, this application will put data into the Kafka
-and check if the response equals the expected value.
+Data generator for Hydra system.
 
  
 ## Running test

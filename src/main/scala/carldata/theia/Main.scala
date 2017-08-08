@@ -3,10 +3,12 @@ package carldata.theia
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
+import scala.concurrent.duration._
 
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
 import org.apache.kafka.streams.kstream.{KStream, KStreamBuilder}
+
 
 object Main {
 
@@ -14,6 +16,7 @@ object Main {
 
   case class Params(kafkaBroker: String, prefix: String)
 
+  /** Kafka configuration builder */
   def buildConfig(params: Params): Properties = {
     val p = new Properties()
     p.put(StreamsConfig.APPLICATION_ID_CONFIG, "hydra")
@@ -23,19 +26,30 @@ object Main {
     p
   }
 
+  /** Command line parser */
   def parseArgs(args: Array[String]): Params = {
-    Params(kafkaBroker="localhost:9092", prefix="")
+    Params(kafkaBroker = "localhost:9092", prefix = "")
   }
 
-  def main(args: Array[String]): Unit = {
-    val params = parseArgs(args)
+  /** Create full topology */
+  def buildTopology(params: Params): KafkaStreams = {
     val config = buildConfig(params)
     val builder: KStreamBuilder = new KStreamBuilder()
     val dataStream: KStream[String, String] = builder.stream("Data")
     dataStream.foreach((_, value) => println(value))
+    new KafkaStreams(builder, config)
+  }
 
-    val streams: KafkaStreams = new KafkaStreams(builder, config)
+  /** Main application. Creates topology and runs generators */
+  def main(args: Array[String]): Unit = {
+    val params = parseArgs(args)
+    val streams = buildTopology(params)
+    val healthCheckGen = new HealthCheckGen(3.second)
+
+    println("start streams")
     streams.start()
+    println("Start generators")
+    healthCheckGen.start()
 
     Runtime.getRuntime.addShutdownHook(new Thread(() => {
       streams.close(10, TimeUnit.SECONDS)
