@@ -30,8 +30,11 @@ object Main {
       val theiaSink: ActorRef = system.actorOf(KafkaSink.props("theia", params.kafkaBroker), "health-check-sink")
       val healthCheck: ActorRef = system.actorOf(HealthCheck.props(theiaSink), "health-check-gen")
 
-      // check Health every 3 seconds
-      system.scheduler.schedule(0.milliseconds, 3.second, healthCheck, Tick)
+      // check Health every 5 seconds
+      system.scheduler.schedule(0.milliseconds, 5.second, healthCheck, Tick)
+      // Listen on theia topic
+      val theiaBolt = new KafkaReader(params.kafkaBroker, "theia", healthCheck)
+      theiaBolt.start()
 
       println(">>> Press ENTER to exit <<<")
       StdIn.readLine()

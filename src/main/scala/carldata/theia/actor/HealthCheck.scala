@@ -14,9 +14,17 @@ object HealthCheck {
 class HealthCheck(sinkActor: ActorRef) extends Actor {
   import HealthCheck._
 
+  var waitMessage: Long = 0
+
   def receive: Actor.Receive = {
+
     case Tick =>
-      val v = System.currentTimeMillis().toString
-      sinkActor ! Message(v, v)
+      val v = System.currentTimeMillis()
+      if(waitMessage > 0) println(v + ": No response for HealthCheck message. Is Kafka alive?")
+      waitMessage = v
+      sinkActor ! Message("", v.toString)
+
+    case Message(_, v) =>
+      waitMessage = 0L
   }
 }
