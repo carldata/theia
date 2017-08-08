@@ -1,58 +1,42 @@
 package carldata.theia
 
-import java.util.Properties
-import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
-import scala.concurrent.duration._
 
-import org.apache.kafka.common.serialization.Serdes
-import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
-import org.apache.kafka.streams.kstream.{KStream, KStreamBuilder}
+import akka.actor.{ActorRef, ActorSystem}
+import carldata.theia.actor.HealthCheck.Tick
+import carldata.theia.actor.{HealthCheck, KafkaSink}
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.io.StdIn
+
 
 
 object Main {
 
   private val logger = Logger.getLogger("Hydra")
-
   case class Params(kafkaBroker: String, prefix: String)
-
-  val healthCheckGen = new HealthCheckGen(3.second)
-
-  /** Kafka configuration builder */
-  def buildConfig(params: Params): Properties = {
-    val p = new Properties()
-    p.put(StreamsConfig.APPLICATION_ID_CONFIG, "hydra")
-    p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, params.kafkaBroker)
-    p.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass)
-    p.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass)
-    p
-  }
+  val system: ActorSystem = ActorSystem("Theia")
 
   /** Command line parser */
   def parseArgs(args: Array[String]): Params = {
     Params(kafkaBroker = "localhost:9092", prefix = "")
   }
 
-  /** Create full topology */
-  def buildTopology(params: Params): KafkaStreams = {
-    val config = buildConfig(params)
-    val builder: KStreamBuilder = new KStreamBuilder()
-    val dataStream: KStream[String, String] = builder.stream("theia")
-    dataStream.foreach((_, value) => println(value))
-    new KafkaStreams(builder, config)
-  }
-
   /** Main application. Creates topology and runs generators */
   def main(args: Array[String]): Unit = {
     val params = parseArgs(args)
-    val streams = buildTopology(params)
+    try {
+      val theiaSink: ActorRef = system.actorOf(KafkaSink.props("theia"), "health-check-sink")
+      val healthCheck: ActorRef = system.actorOf(HealthCheck.props(theiaSink), "health-check-gen")
 
-    streams.start()
-    healthCheckGen.start()
-    println("Ready")
+      // check Health every 3 seconds
+      system.scheduler.schedule(0.milliseconds, 3.second, healthCheck, Tick)
 
-    Runtime.getRuntime.addShutdownHook(new Thread(() => {
-      streams.close(10, TimeUnit.SECONDS)
-    }))
+      println(">>> Press ENTER to exit <<<")
+      StdIn.readLine()
+    } finally {
+      system.terminate()
+    }
   }
 }
