@@ -16,6 +16,8 @@ object Main {
 
   case class Params(kafkaBroker: String, prefix: String)
 
+  val healthCheckGen = new HealthCheckGen(3.second)
+
   /** Kafka configuration builder */
   def buildConfig(params: Params): Properties = {
     val p = new Properties()
@@ -35,7 +37,7 @@ object Main {
   def buildTopology(params: Params): KafkaStreams = {
     val config = buildConfig(params)
     val builder: KStreamBuilder = new KStreamBuilder()
-    val dataStream: KStream[String, String] = builder.stream("Data")
+    val dataStream: KStream[String, String] = builder.stream("theia")
     dataStream.foreach((_, value) => println(value))
     new KafkaStreams(builder, config)
   }
@@ -44,12 +46,10 @@ object Main {
   def main(args: Array[String]): Unit = {
     val params = parseArgs(args)
     val streams = buildTopology(params)
-    val healthCheckGen = new HealthCheckGen(3.second)
 
-    println("start streams")
     streams.start()
-    println("Start generators")
     healthCheckGen.start()
+    println("Ready")
 
     Runtime.getRuntime.addShutdownHook(new Thread(() => {
       streams.close(10, TimeUnit.SECONDS)
