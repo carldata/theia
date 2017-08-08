@@ -27,7 +27,7 @@ object Main {
   def main(args: Array[String]): Unit = {
     val params = parseArgs(args)
     try {
-      val theiaSink: ActorRef = system.actorOf(KafkaSink.props("theia"), "health-check-sink")
+      val theiaSink: ActorRef = system.actorOf(KafkaSink.props("theia", params.kafkaBroker), "health-check-sink")
       val healthCheck: ActorRef = system.actorOf(HealthCheck.props(theiaSink), "health-check-gen")
 
       // check Health every 3 seconds
