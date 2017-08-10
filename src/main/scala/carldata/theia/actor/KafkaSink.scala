@@ -23,10 +23,17 @@ object KafkaSink {
 class KafkaSink(topic: String, brokers: String) extends Actor {
   import KafkaSink._
 
-  def producer = new KafkaProducer[String, String](initProps(brokers))
+  println("Create KafkaSink on topic: " + topic)
+  val producer = new KafkaProducer[String, String](initProps(brokers))
+
   def receive: Actor.Receive = {
     case KMessage(k, v) =>
       val data = new ProducerRecord[String, String](topic, k, v)
       producer.send(data)
+  }
+
+  override def postStop(): Unit = {
+    println("close sink: " + topic)
+    producer.close()
   }
 }
