@@ -1,18 +1,15 @@
 package carldata.theia.actor
 
 import akka.actor.{Actor, ActorRef, Props}
-import carldata.theia.actor.KafkaSink.Message
+import carldata.theia.actor.Messages.{KMessage, Tick}
 
 
 /** HealthCheck generates event */
 object HealthCheck {
-  def props(printerActor: ActorRef): Props = Props(new HealthCheck(printerActor))
-  final case class WhoToGreet(who: String)
-  case object Tick
+  def props(sinkActor: ActorRef): Props = Props(new HealthCheck(sinkActor))
 }
 
 class HealthCheck(sinkActor: ActorRef) extends Actor {
-  import HealthCheck._
 
   var waitMessage: Long = 0
 
@@ -22,9 +19,9 @@ class HealthCheck(sinkActor: ActorRef) extends Actor {
       val v = System.currentTimeMillis()
       if(waitMessage > 0) println(v + ": No response for HealthCheck message. Is Kafka alive?")
       waitMessage = v
-      sinkActor ! Message("", v.toString)
+      sinkActor ! KMessage("", v.toString)
 
-    case Message(_, v) =>
+    case KMessage(_, v) =>
       waitMessage = 0L
   }
 }

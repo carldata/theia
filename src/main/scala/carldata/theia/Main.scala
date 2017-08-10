@@ -3,8 +3,8 @@ package carldata.theia
 import java.util.logging.Logger
 
 import akka.actor.{ActorRef, ActorSystem}
-import carldata.theia.actor.HealthCheck.Tick
-import carldata.theia.actor.{HealthCheck, KafkaSink}
+import carldata.theia.actor.Messages.Tick
+import carldata.theia.actor.{DataGen, HealthCheck, KafkaSink}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -27,14 +27,20 @@ object Main {
   def main(args: Array[String]): Unit = {
     val params = parseArgs(args)
     try {
+      // Create actors
       val theiaSink: ActorRef = system.actorOf(KafkaSink.props("theia", params.kafkaBroker), "health-check-sink")
+      val dataSink: ActorRef = system.actorOf(KafkaSink.props("data", params.kafkaBroker), "data-sink")
       val healthCheck: ActorRef = system.actorOf(HealthCheck.props(theiaSink), "health-check-gen")
-
-      // check Health every 5 seconds
-      system.scheduler.schedule(0.milliseconds, 5.second, healthCheck, Tick)
-      // Listen on theia topic
+      val dataGen: ActorRef = system.actorOf(DataGen.props(dataSink), "data-gen")
       val theiaBolt = new KafkaReader(params.kafkaBroker, "theia", healthCheck)
+
+      // Start Kafka listeners
       theiaBolt.start()
+
+      // Check Health every 5 seconds
+      system.scheduler.schedule(0.milliseconds, 5.second, healthCheck, Tick)
+      // Send data every 1 second
+      system.scheduler.schedule(0.milliseconds, 1.second, dataGen, Tick)
 
       println(">>> Press ENTER to exit <<<")
       StdIn.readLine()

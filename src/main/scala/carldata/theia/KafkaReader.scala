@@ -4,11 +4,11 @@ import java.util.concurrent.Executors
 import java.util.{Collections, Properties}
 
 import akka.actor.ActorRef
-import carldata.theia.actor.KafkaSink.Message
+import carldata.theia.actor.Messages.KMessage
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord, KafkaConsumer}
 
-import scala.concurrent.duration._
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
 
 /**
   * Read data from Kafka topic
@@ -41,7 +41,7 @@ class KafkaReader(val brokers: String, val topic: String, val actor: ActorRef) {
       while (true) {
         val records = consumer.poll(1.second.toMillis).asScala
         for (record: ConsumerRecord[String, String] <- records) {
-          val msg = Message(record.key(), record.value())
+          val msg = KMessage(record.key(), record.value())
           actor ! msg
         }
       }
