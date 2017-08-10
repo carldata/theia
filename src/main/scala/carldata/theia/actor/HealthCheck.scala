@@ -1,5 +1,7 @@
 package carldata.theia.actor
 
+import java.time.LocalDateTime
+
 import akka.actor.{Actor, ActorRef, Props}
 import carldata.theia.actor.Messages.{KMessage, Tick}
 
@@ -17,7 +19,7 @@ class HealthCheck(sinkActor: ActorRef) extends Actor {
 
     case Tick =>
       val v = System.currentTimeMillis()
-      if(waitMessage > 0) println(v + ": No response for HealthCheck message. Is Kafka alive?")
+      if(waitMessage > 0) println(LocalDateTime.now() + ": No response for HealthCheck message. Is Kafka alive?")
       waitMessage = v
       sinkActor ! KMessage("", v.toString)
 

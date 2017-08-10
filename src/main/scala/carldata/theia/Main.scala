@@ -20,7 +20,9 @@ object Main {
 
   /** Command line parser */
   def parseArgs(args: Array[String]): Params = {
-    Params(kafkaBroker = "localhost:9092", prefix = "")
+    val kafka = args.find(_.contains("--kafka=")).map(_.substring(8)).getOrElse("localhost:9092")
+    val prefix = args.find(_.contains("--prefix=")).map(_.substring(9)).getOrElse("")
+    Params(kafka, prefix)
   }
 
   /** Main application. Creates topology and runs generators */
