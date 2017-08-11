@@ -1,5 +1,6 @@
 package carldata.theia.actor
 
+import java.time.LocalDateTime
 import java.util.Properties
 
 import akka.actor.{Actor, Props}
@@ -23,7 +24,7 @@ object KafkaSink {
 class KafkaSink(topic: String, brokers: String) extends Actor {
   import KafkaSink._
 
-  println("Create KafkaSink on topic: " + topic)
+  println(LocalDateTime.now() +  ": Create KafkaSink on topic: " + topic)
   val producer = new KafkaProducer[String, String](initProps(brokers))
 
   def receive: Actor.Receive = {

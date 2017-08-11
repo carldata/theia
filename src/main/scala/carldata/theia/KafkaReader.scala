@@ -16,10 +16,10 @@ import scala.concurrent.duration._
 class KafkaReader(val brokers: String, val topic: String, val actor: ActorRef) {
 
   val consumer = new KafkaConsumer[String, String](initProps)
+  var isRunning = true
 
   def shutdown(): Unit = {
-    if (consumer != null)
-      consumer.close()
+    isRunning = false
   }
 
   def initProps: Properties = {
@@ -38,13 +38,14 @@ class KafkaReader(val brokers: String, val topic: String, val actor: ActorRef) {
     consumer.subscribe(Collections.singletonList(topic))
 
     Executors.newSingleThreadExecutor.execute(() => {
-      while (true) {
+      while (isRunning) {
         val records = consumer.poll(1.second.toMillis).asScala
         for (record: ConsumerRecord[String, String] <- records) {
           val msg = KMessage(record.key(), record.value())
           actor ! msg
         }
       }
+      consumer.close()
     })
   }
 }

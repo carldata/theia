@@ -40,12 +40,13 @@ object Main {
       theiaBolt.start()
 
       // Check Health every 5 seconds
-//      system.scheduler.schedule(0.milliseconds, 5.second, healthCheck, Tick)
+      system.scheduler.schedule(0.milliseconds, 5.second, healthCheck, Tick)
       // Send data every 1 second
       system.scheduler.schedule(0.milliseconds, 1.second, dataGen, Tick)
 
       println(">>> Press ENTER to exit <<<")
       StdIn.readLine()
+      theiaBolt.shutdown()
     } finally {
       system.terminate()
     }
