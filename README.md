@@ -2,7 +2,7 @@
 
 [![Build status](https://travis-ci.org/carldata/theia.svg?branch=master)](https://travis-ci.org/carldata/theia)
 
-Data generator for Hydra system.
+Data generator for [Hydra](https://github.com/carldata/hydra) system.
 
  
 ## Running test
@@ -11,6 +11,9 @@ Data generator for Hydra system.
 sbt assembly
 java -jar target/scala-2.12/theia.jar 
  ```
+ 
+Please check Hydra README.md for information how to setup environment.
+ 
  
 # Join in!
 
