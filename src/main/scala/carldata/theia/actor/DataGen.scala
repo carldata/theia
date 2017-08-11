@@ -8,6 +8,8 @@ import carldata.hs.Data.DataRecord
 import carldata.theia.actor.Messages.{KMessage, Tick}
 import spray.json._
 
+import scala.util.Random
+
 
 /** Generate data events */
 object DataGen {
@@ -19,7 +21,8 @@ class DataGen(sinkActor: ActorRef) extends Actor {
   def receive: Actor.Receive = {
 
     case Tick =>
-      val r = DataRecord("theia-in-1", LocalDateTime.now(), 1f)
+      val id = Random.nextInt(5)
+      val r = DataRecord(s"theia-in-$id", LocalDateTime.now(), 1f)
       sinkActor ! KMessage(r.channel, r.toJson.compactPrint)
 
   }

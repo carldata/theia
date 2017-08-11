@@ -4,7 +4,7 @@ import java.util.logging.Logger
 
 import akka.actor.{ActorRef, ActorSystem}
 import carldata.theia.actor.Messages.Tick
-import carldata.theia.actor.{DataGen, HealthCheck, KafkaSink}
+import carldata.theia.actor.{DataGen, HealthCheck, KafkaSink, RTJobGen}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -29,11 +29,15 @@ object Main {
   def main(args: Array[String]): Unit = {
     val params = parseArgs(args)
     try {
-      // Create actors
+      // Kafka sink
       val theiaSink: ActorRef = system.actorOf(KafkaSink.props("theia", params.kafkaBroker), "health-check-sink")
       val dataSink: ActorRef = system.actorOf(KafkaSink.props("data", params.kafkaBroker), "data-sink")
+      val rtSink: ActorRef = system.actorOf(KafkaSink.props("hydra-rt", params.kafkaBroker), "rt-sink")
+      // Data generators
       val healthCheck: ActorRef = system.actorOf(HealthCheck.props(theiaSink), "health-check-gen")
       val dataGen: ActorRef = system.actorOf(DataGen.props(dataSink), "data-gen")
+      val rtJobGen: ActorRef = system.actorOf(RTJobGen.props(rtSink), "rtjob-gen")
+      // Kafka readers
       val theiaBolt = new KafkaReader(params.kafkaBroker, "theia", healthCheck)
 
       // Start Kafka listeners
@@ -43,6 +47,8 @@ object Main {
       system.scheduler.schedule(0.milliseconds, 5.second, healthCheck, Tick)
       // Send data every 1 second
       system.scheduler.schedule(0.milliseconds, 1.second, dataGen, Tick)
+      // Send RealtTime job after 5 second once
+      system.scheduler.scheduleOnce(5.second, rtJobGen, Tick)
 
       println(">>> Press ENTER to exit <<<")
       StdIn.readLine()
