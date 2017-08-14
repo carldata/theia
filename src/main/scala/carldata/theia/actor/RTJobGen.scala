@@ -19,7 +19,7 @@ class RTJobGen(sinkActor: ActorRef) extends Actor {
     """
       |module Theia1
       |
-      |def main(t: DateTime, v: Number): Number = v
+      |def main(t: DateTime, v: Number): Number = v+1
     """.stripMargin
 
   def receive: Actor.Receive = {
