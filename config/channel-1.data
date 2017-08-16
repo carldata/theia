@@ -1,0 +1,3 @@
+channel: theia-in-1
+frequency: 5 seconds
+value: uniform(0, 100)
