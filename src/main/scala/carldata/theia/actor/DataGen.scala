@@ -23,7 +23,7 @@ class DataGen(sinkActor: ActorRef) extends Actor {
     case Tick =>
       val id = Random.nextInt(5)
       val r = DataRecord(s"theia-in-$id", LocalDateTime.now(), 1f)
-      sinkActor ! KMessage(r.channel, r.toJson.compactPrint)
+      sinkActor ! KMessage(r.channelId, r.toJson.compactPrint)
 
   }
 }

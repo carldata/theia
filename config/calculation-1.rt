@@ -3,5 +3,4 @@ theia-in-1
 # output
 theia-out-1
 # script:
-module Theia1
 def main(t: DateTime, v: Number): Number = 25.4*v
