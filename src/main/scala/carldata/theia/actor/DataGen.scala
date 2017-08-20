@@ -13,16 +13,17 @@ import scala.util.Random
 
 /** Generate data events */
 object DataGen {
-  def props(sinkActor: ActorRef): Props = Props(new DataGen(sinkActor))
+  def props(channelId: String, sinkActor: ActorRef): Props =
+    Props(new DataGen(channelId, sinkActor))
 }
 
-class DataGen(sinkActor: ActorRef) extends Actor {
+class DataGen(channelId: String, sinkActor: ActorRef) extends Actor {
 
   def receive: Actor.Receive = {
 
     case Tick =>
-      val id = Random.nextInt(5)
-      val r = DataRecord(s"theia-in-$id", LocalDateTime.now(), 1f)
+      val v = Random.nextFloat() * 1000f
+      val r = DataRecord(channelId, LocalDateTime.now(), v)
       sinkActor ! KMessage(r.channelId, r.toJson.compactPrint)
 
   }

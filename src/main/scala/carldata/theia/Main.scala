@@ -9,6 +9,7 @@ import carldata.theia.actor.{DataGen, HealthCheck, KafkaSink, RTJobGen}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.io.StdIn
+import scala.util.Random
 
 
 
@@ -35,18 +36,18 @@ object Main {
       val rtSink: ActorRef = system.actorOf(KafkaSink.props("hydra-rt", params.kafkaBroker), "rt-sink")
       // Data generators
       val healthCheck: ActorRef = system.actorOf(HealthCheck.props(theiaSink), "health-check-gen")
-      val dataGen: ActorRef = system.actorOf(DataGen.props(dataSink), "data-gen")
       val rtJobGen: ActorRef = system.actorOf(RTJobGen.props(rtSink), "rtjob-gen")
       // Kafka readers
       val theiaBolt = new KafkaReader(params.kafkaBroker, "theia", healthCheck)
+
+      // Five device data generators
+      for(i <- 1.to(5)) yield mkDataGen(i, dataSink)
 
       // Start Kafka listeners
       theiaBolt.start()
 
       // Check Health every 5 seconds
       system.scheduler.schedule(0.milliseconds, 5.second, healthCheck, Tick)
-      // Send data every 1 second
-      system.scheduler.schedule(0.milliseconds, 1.second, dataGen, Tick)
       // Send RealtTime job after 5 second once
       system.scheduler.scheduleOnce(5.second, rtJobGen, Tick)
 
@@ -56,5 +57,16 @@ object Main {
     } finally {
       system.terminate()
     }
+  }
+
+  /** Create Data Generator Actor */
+  def mkDataGen(id: Int, dataSink: ActorRef): ActorRef = {
+    val channelId = s"theia-in-$id"
+    val actor = system.actorOf(DataGen.props(channelId, dataSink), s"data-gen-$id")
+    // Send data every 1 second
+    val startTime = Random.nextInt(1000)
+    val resolution = Random.nextInt(4) + 1
+    system.scheduler.schedule(startTime.milliseconds, resolution.second, actor, Tick)
+    actor
   }
 }
