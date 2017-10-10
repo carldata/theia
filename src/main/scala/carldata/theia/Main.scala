@@ -4,7 +4,7 @@ import java.util.logging.Logger
 
 import akka.actor.{ActorRef, ActorSystem}
 import carldata.theia.actor.Messages.Tick
-import carldata.theia.actor.{DataGen, HealthCheck, KafkaSink, RTJobGen}
+import carldata.theia.actor.{DataGen, KafkaSink, RTJobGen}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -12,11 +12,12 @@ import scala.io.StdIn
 import scala.util.Random
 
 
-
 object Main {
 
   private val logger = Logger.getLogger("Theia")
+
   case class Params(kafkaBroker: String, prefix: String)
+
   val system: ActorSystem = ActorSystem("Theia")
 
   /** Command line parser */
@@ -29,34 +30,20 @@ object Main {
   /** Main application. Creates topology and runs generators */
   def main(args: Array[String]): Unit = {
     val params = parseArgs(args)
-    try {
-      // Kafka sink
-      val theiaSink: ActorRef = system.actorOf(KafkaSink.props(params.prefix+"theia", params.kafkaBroker), "health-check-sink")
-      val dataSink: ActorRef = system.actorOf(KafkaSink.props(params.prefix+"data", params.kafkaBroker), "data-sink")
-      val rtSink: ActorRef = system.actorOf(KafkaSink.props(params.prefix+"hydra-rt", params.kafkaBroker), "rt-sink")
-      // Data generators
-      val healthCheck: ActorRef = system.actorOf(HealthCheck.props(theiaSink), "health-check-gen")
-      val rtJobGen: ActorRef = system.actorOf(RTJobGen.props(rtSink), "rtjob-gen")
-      // Kafka readers
-      val theiaBolt = new KafkaReader(params.kafkaBroker, "theia", healthCheck)
+    // Kafka sink
+    val dataSink: ActorRef = system.actorOf(KafkaSink.props(params.prefix + "data", params.kafkaBroker), "data-sink")
+    val rtSink: ActorRef = system.actorOf(KafkaSink.props(params.prefix + "hydra-rt", params.kafkaBroker), "rt-sink")
+    // Data generators
+    val rtJobGen: ActorRef = system.actorOf(RTJobGen.props(rtSink), "rtjob-gen")
 
-      // Five device data generators
-      for(i <- 1.to(5)) yield mkDataGen(i, dataSink)
+    // Five device data generators
+    for (i <- 1.to(5)) yield mkDataGen(i, dataSink)
 
-      // Start Kafka listeners
-      theiaBolt.start()
-
-      // Check Health every 5 seconds
-      system.scheduler.schedule(0.milliseconds, 5.second, healthCheck, Tick)
-      // Send RealTime job after 5 second once
+    // Send RealTime job after 5 second once
 //      system.scheduler.scheduleOnce(5.second, rtJobGen, Tick)
 
-      println(">>> Press ENTER to exit <<<")
-      StdIn.readLine()
-      theiaBolt.shutdown()
-    } finally {
-      system.terminate()
-    }
+    println(">>> Press ENTER to exit <<<")
+    StdIn.readLine()
   }
 
   /** Create Data Generator Actor */
