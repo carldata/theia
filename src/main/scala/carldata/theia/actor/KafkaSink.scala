@@ -2,6 +2,7 @@ package carldata.theia.actor
 
 import java.time.LocalDateTime
 import java.util.Properties
+import java.util.logging.Logger
 
 import akka.actor.{Actor, Props}
 import carldata.theia.actor.Messages.KMessage
@@ -9,12 +10,13 @@ import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 
 
 object KafkaSink {
+  private val logger = Logger.getLogger("Theia")
+
   def props(topic: String, broker: String): Props = Props(new KafkaSink(topic, broker))
 
   def initProps(brokers: String): Properties = {
     val props = new Properties()
     props.put("bootstrap.servers", brokers)
-    props.put("client.id", "Theia")
     props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
     props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
     props
@@ -24,7 +26,7 @@ object KafkaSink {
 class KafkaSink(topic: String, brokers: String) extends Actor {
   import KafkaSink._
 
-  println(LocalDateTime.now() +  ": Create KafkaSink on topic: " + topic)
+  logger.info("Create KafkaSink on topic: " + topic)
   val producer = new KafkaProducer[String, String](initProps(brokers))
 
   def receive: Actor.Receive = {

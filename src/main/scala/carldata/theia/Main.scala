@@ -15,7 +15,7 @@ import scala.util.Random
 
 object Main {
 
-  private val logger = Logger.getLogger("Hydra")
+  private val logger = Logger.getLogger("Theia")
   case class Params(kafkaBroker: String, prefix: String)
   val system: ActorSystem = ActorSystem("Theia")
 
@@ -31,9 +31,9 @@ object Main {
     val params = parseArgs(args)
     try {
       // Kafka sink
-      val theiaSink: ActorRef = system.actorOf(KafkaSink.props("theia", params.kafkaBroker), "health-check-sink")
-      val dataSink: ActorRef = system.actorOf(KafkaSink.props("data", params.kafkaBroker), "data-sink")
-      val rtSink: ActorRef = system.actorOf(KafkaSink.props("hydra-rt", params.kafkaBroker), "rt-sink")
+      val theiaSink: ActorRef = system.actorOf(KafkaSink.props(params.prefix+"theia", params.kafkaBroker), "health-check-sink")
+      val dataSink: ActorRef = system.actorOf(KafkaSink.props(params.prefix+"data", params.kafkaBroker), "data-sink")
+      val rtSink: ActorRef = system.actorOf(KafkaSink.props(params.prefix+"hydra-rt", params.kafkaBroker), "rt-sink")
       // Data generators
       val healthCheck: ActorRef = system.actorOf(HealthCheck.props(theiaSink), "health-check-gen")
       val rtJobGen: ActorRef = system.actorOf(RTJobGen.props(rtSink), "rtjob-gen")
@@ -48,8 +48,8 @@ object Main {
 
       // Check Health every 5 seconds
       system.scheduler.schedule(0.milliseconds, 5.second, healthCheck, Tick)
-      // Send RealtTime job after 5 second once
-      system.scheduler.scheduleOnce(5.second, rtJobGen, Tick)
+      // Send RealTime job after 5 second once
+//      system.scheduler.scheduleOnce(5.second, rtJobGen, Tick)
 
       println(">>> Press ENTER to exit <<<")
       StdIn.readLine()
