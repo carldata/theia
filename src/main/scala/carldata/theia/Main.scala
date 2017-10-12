@@ -35,7 +35,7 @@ object Main {
     val dataSink: ActorRef = system.actorOf(KafkaSink.props(params.prefix + "data", params.kafkaBroker), "data-sink")
     val rtSink: ActorRef = system.actorOf(KafkaSink.props(params.prefix + "hydra-rt", params.kafkaBroker), "rt-sink")
     // Data generators
-    val rtJobGen: ActorRef = system.actorOf(RTJobGen.props(rtSink), "rtjob-gen")
+    //val rtJobGen: ActorRef = system.actorOf(RTJobGen.props(rtSink), "rtjob-gen")
 
     // Five device data generators
     for (i <- 1.to(10)) yield mkDataGen(i, dataSink,params.eventsPerSecond)
