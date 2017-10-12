@@ -33,7 +33,7 @@ class RTJobGen(sinkActor: ActorRef) extends Actor {
     case Tick =>
       jobs.foreach { j =>
         logger.info("Send RealTime Job on channels: " + j.inputChannelIds.mkString(","))
-        sinkActor ! KMessage("theia", j.toJson.compactPrint)
+        sinkActor ! KMessage("theia", List(j.toJson.compactPrint))
       }
 
   }
