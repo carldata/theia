@@ -24,7 +24,7 @@ object Main {
   def parseArgs(args: Array[String]): Params = {
     val kafka = args.find(_.contains("--kafka=")).map(_.substring(8)).getOrElse("localhost:9092")
     val prefix = args.find(_.contains("--prefix=")).map(_.substring(9)).getOrElse("")
-    val eventsPerSecond = args.find(_.contains("--eps=")).map(_.substring(6)).getOrElse("1").toInt
+    val eventsPerSecond = args.find(_.contains("--eps=")).map(_.substring(6)).getOrElse("1").trim().toInt
     Params(kafka, prefix, if(eventsPerSecond <= 0) 1 else eventsPerSecond)
   }
 
