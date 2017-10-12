@@ -24,6 +24,7 @@ object KafkaSink {
 }
 
 class KafkaSink(topic: String, brokers: String) extends Actor {
+
   import KafkaSink._
 
   logger.info("Create KafkaSink on topic: " + topic)
@@ -31,8 +32,10 @@ class KafkaSink(topic: String, brokers: String) extends Actor {
 
   def receive: Actor.Receive = {
     case KMessage(k, v) =>
-      val data = new ProducerRecord[String, String](topic, k, v)
-      producer.send(data)
+      v.map(recVal => {
+        val data = new ProducerRecord[String, String](topic, k, recVal)
+        producer.send(data)
+      })
   }
 
   override def postStop(): Unit = {

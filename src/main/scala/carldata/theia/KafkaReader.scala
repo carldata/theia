@@ -39,11 +39,9 @@ class KafkaReader(val brokers: String, val topic: String, val actor: ActorRef) {
 
     Executors.newSingleThreadExecutor.execute(() => {
       while (isRunning) {
-        val records = consumer.poll(1.second.toMillis).asScala
-        for (record: ConsumerRecord[String, String] <- records) {
-          val msg = KMessage(record.key(), record.value())
-          actor ! msg
-        }
+        val records = consumer.poll(1.second.toMillis).asScala.map(r => r.value()).toSeq
+        val msg = KMessage("", records)
+        actor ! msg
       }
       consumer.close()
     })
