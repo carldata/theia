@@ -1,6 +1,5 @@
 package carldata.theia.actor
 
-import java.time.LocalDateTime
 import java.util.Properties
 import java.util.logging.Logger
 
@@ -12,14 +11,8 @@ import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 
 object KafkaSink {
   private val logger = Logger.getLogger("Theia")
-  private val statsDCClient: StatsDClient = new NonBlockingStatsDClient(
-    "theia",
-    "localhost",
-    8125
-  )
 
-
-  def props(topic: String, broker: String): Props = Props(new KafkaSink(topic, broker))
+  def props(topic: String, broker: String, statSDHost: String): Props = Props(new KafkaSink(topic, broker, statSDHost))
 
   def initProps(brokers: String): Properties = {
     val props = new Properties()
@@ -30,9 +23,15 @@ object KafkaSink {
   }
 }
 
-class KafkaSink(topic: String, brokers: String) extends Actor {
+class KafkaSink(topic: String, brokers: String, statSDHost: String) extends Actor {
 
   import KafkaSink._
+
+  private val statsDCClient: StatsDClient = new NonBlockingStatsDClient(
+    "theia",
+    statSDHost,
+    8125
+  )
 
   logger.info("Create KafkaSink on topic: " + topic)
   val producer = new KafkaProducer[String, String](initProps(brokers))

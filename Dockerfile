@@ -3,6 +3,7 @@ FROM openjdk:jdk-alpine
 ENV SCALA_VERSION 2.12.3
 ENV Kafka_Broker localhost:9092
 ENV Events_Per_Second 100
+ENV StatSD_Host localhost
 
 WORKDIR /root
 ADD target/scala-2.12/theia.jar /root/theia.jar
