@@ -12,6 +12,7 @@ libraryDependencies ++= Seq(
   "org.apache.kafka" % "kafka-clients" % "0.11.0.1",
   "ch.qos.logback" % "logback-classic" % "1.2.3" % Runtime,
   "io.github.carldata" %% "hydra-streams" % "0.4.3",
+  "com.datadoghq" % "java-dogstatsd-client" % "2.3",
 
   "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
   "org.scalatest" %% "scalatest" % "3.0.1" % "test"
