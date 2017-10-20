@@ -3,6 +3,7 @@ FROM openjdk:jdk-alpine
 ENV SCALA_VERSION 2.12.3
 ENV Kafka_Broker localhost:9092
 ENV Events_Per_Second 100
+ENV Channels_Per_Second 10
 ENV StatSD_Host localhost
 
 WORKDIR /root

@@ -5,6 +5,7 @@ import java.util.logging.Logger
 import akka.actor.{ActorRef, ActorSystem}
 import carldata.theia.actor.Messages.Tick
 import carldata.theia.actor.{DataGen, KafkaSink, RTJobGen}
+import com.timgroup.statsd.{NonBlockingStatsDClient, StatsDClient}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -16,7 +17,8 @@ object Main {
 
   private val logger = Logger.getLogger("Theia")
 
-  case class Params(kafkaBroker: String, prefix: String, eventsPerSecond: Int, statSDHost: String)
+
+  case class Params(kafkaBroker: String, prefix: String, eventsPerSecond: Int, channelsPerSecond: Int, statSDHost: String)
 
   val system: ActorSystem = ActorSystem("Theia")
 
@@ -25,21 +27,28 @@ object Main {
     val kafka = args.find(_.contains("--kafka=")).map(_.substring(8)).getOrElse("localhost:9092")
     val prefix = args.find(_.contains("--prefix=")).map(_.substring(9)).getOrElse("")
     val eventsPerSecond = args.find(_.contains("--eps=")).map(_.substring(6)).getOrElse("1").trim().toInt
+    val channelsPerSecond = args.find(_.contains("--cps=")).map(_.substring(6)).getOrElse("1").trim().toInt
     val statSDHost = args.find(_.contains("--statSDHost=")).map(_.substring(13)).getOrElse("localhost")
-    Params(kafka, prefix, if (eventsPerSecond <= 0) 1 else eventsPerSecond, statSDHost)
+    Params(kafka, prefix, if (eventsPerSecond <= 0) 1 else eventsPerSecond, if (channelsPerSecond <= 0) 1 else channelsPerSecond, statSDHost)
   }
 
   /** Main application. Creates topology and runs generators */
   def main(args: Array[String]): Unit = {
+
     val params = parseArgs(args)
+    val statsDCClient: StatsDClient = new NonBlockingStatsDClient(
+      "theia",
+      params.statSDHost,
+      8125
+    )
     // Kafka sink
-    val dataSink: ActorRef = system.actorOf(KafkaSink.props(params.prefix + "data", params.kafkaBroker, params.statSDHost), "data-sink")
-    val rtSink: ActorRef = system.actorOf(KafkaSink.props(params.prefix + "hydra-rt", params.kafkaBroker, params.statSDHost), "rt-sink")
+    val dataSink: ActorRef = system.actorOf(KafkaSink.props(params.prefix + "data", params.kafkaBroker, statsDCClient), "data-sink")
+    val rtSink: ActorRef = system.actorOf(KafkaSink.props(params.prefix + "hydra-rt", params.kafkaBroker, statsDCClient), "rt-sink")
     // Data generators
     //val rtJobGen: ActorRef = system.actorOf(RTJobGen.props(rtSink), "rtjob-gen")
 
     // Five device data generators
-    for (i <- 1.to(10)) yield mkDataGen(i, dataSink, params.eventsPerSecond)
+    for (i <- 1.to(params.channelsPerSecond)) yield mkDataGen(i, dataSink, params.eventsPerSecond)
 
     // Send RealTime job after 5 second once
     //      system.scheduler.scheduleOnce(5.second, rtJobGen, Tick)
@@ -54,7 +63,7 @@ object Main {
     val actor = system.actorOf(DataGen.props(channelId, dataSink, eps), s"data-gen-$id")
     // Send data every 1 second
     val startTime = Random.nextInt(1000)
-    val resolution = Random.nextInt(9) + 1
+    val resolution = 1
     system.scheduler.schedule(startTime.milliseconds, resolution.second, actor, Tick)
     actor
   }

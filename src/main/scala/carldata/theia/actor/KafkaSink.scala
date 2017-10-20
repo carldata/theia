@@ -12,7 +12,7 @@ import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 object KafkaSink {
   private val logger = Logger.getLogger("Theia")
 
-  def props(topic: String, broker: String, statSDHost: String): Props = Props(new KafkaSink(topic, broker, statSDHost))
+  def props(topic: String, broker: String, statsDClient: StatsDClient): Props = Props(new KafkaSink(topic, broker, statsDClient))
 
   def initProps(brokers: String): Properties = {
     val props = new Properties()
@@ -23,15 +23,10 @@ object KafkaSink {
   }
 }
 
-class KafkaSink(topic: String, brokers: String, statSDHost: String) extends Actor {
+class KafkaSink(topic: String, brokers: String, statsDCClient: StatsDClient) extends Actor {
 
   import KafkaSink._
 
-  private val statsDCClient: StatsDClient = new NonBlockingStatsDClient(
-    "theia",
-    statSDHost,
-    8125
-  )
 
   logger.info("Create KafkaSink on topic: " + topic)
   val producer = new KafkaProducer[String, String](initProps(brokers))
