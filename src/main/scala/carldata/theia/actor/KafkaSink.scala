@@ -5,14 +5,14 @@ import java.util.logging.Logger
 
 import akka.actor.{Actor, Props}
 import carldata.theia.actor.Messages.KMessage
-import com.timgroup.statsd.{NonBlockingStatsDClient, StatsDClient}
+import com.timgroup.statsd.StatsDClient
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 
 
 object KafkaSink {
   private val logger = Logger.getLogger("Theia")
 
-  def props(topic: String, broker: String, statsDClient: StatsDClient): Props = Props(new KafkaSink(topic, broker, statsDClient))
+  def props(topic: String, broker: String, statsDClient: Option[StatsDClient]): Props = Props(new KafkaSink(topic, broker, statsDClient))
 
   def initProps(brokers: String): Properties = {
     val props = new Properties()
@@ -23,7 +23,7 @@ object KafkaSink {
   }
 }
 
-class KafkaSink(topic: String, brokers: String, statsDCClient: StatsDClient) extends Actor {
+class KafkaSink(topic: String, brokers: String, statsDCClient: Option[StatsDClient]) extends Actor {
 
   import KafkaSink._
 
@@ -35,7 +35,7 @@ class KafkaSink(topic: String, brokers: String, statsDCClient: StatsDClient) ext
     case KMessage(k, v) =>
       v.map(recVal => {
         val data = new ProducerRecord[String, String](topic, k, recVal)
-        statsDCClient.incrementCounter("events.sent")
+        if (statsDCClient.isDefined) statsDCClient.get.incrementCounter("events.sent")
         producer.send(data)
       })
   }
@@ -43,6 +43,6 @@ class KafkaSink(topic: String, brokers: String, statsDCClient: StatsDClient) ext
   override def postStop(): Unit = {
     println("close sink: " + topic)
     producer.close()
-    statsDCClient.stop()
+    if (statsDCClient.isDefined) statsDCClient.get.stop()
   }
 }
