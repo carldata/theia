@@ -1,20 +1,18 @@
 package carldata.theia
 
-import java.util.logging.Logger
-
 import akka.actor.{ActorRef, ActorSystem}
 import carldata.theia.actor.Messages.Tick
-import carldata.theia.actor.{DataGen, KafkaSink, RTJobGen}
+import carldata.theia.actor.{DataGen, KafkaSink}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.io.StdIn
 import scala.util.Random
-
+import org.slf4j.LoggerFactory
 
 object Main {
 
-  private val logger = Logger.getLogger("Theia")
+  private val logger = LoggerFactory.getLogger("Theia")
 
   case class Params(kafkaBroker: String, prefix: String,eventsPerSecond: Int)
 
@@ -30,6 +28,9 @@ object Main {
 
   /** Main application. Creates topology and runs generators */
   def main(args: Array[String]): Unit = {
+    logger.info("Theia application started Again")
+    // print logback's internal status
+
     val params = parseArgs(args)
     // Kafka sink
     val dataSink: ActorRef = system.actorOf(KafkaSink.props(params.prefix + "data", params.kafkaBroker), "data-sink")

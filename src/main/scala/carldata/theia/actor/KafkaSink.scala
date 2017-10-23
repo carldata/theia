@@ -1,16 +1,15 @@
 package carldata.theia.actor
 
-import java.time.LocalDateTime
 import java.util.Properties
-import java.util.logging.Logger
 
 import akka.actor.{Actor, Props}
 import carldata.theia.actor.Messages.KMessage
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
+import org.slf4j.LoggerFactory
 
 
 object KafkaSink {
-  private val logger = Logger.getLogger("Theia")
+  private val logger = LoggerFactory.getLogger("Theia")
 
   def props(topic: String, broker: String): Props = Props(new KafkaSink(topic, broker))
 
