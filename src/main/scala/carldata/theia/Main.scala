@@ -1,9 +1,8 @@
 package carldata.theia
 
-import java.util.logging.Logger
-
 import akka.actor.{ActorRef, ActorSystem}
 import carldata.theia.actor.Messages.Tick
+import carldata.theia.actor.{DataGen, KafkaSink}
 import carldata.theia.actor.{DataGen, KafkaSink}
 import com.timgroup.statsd.{NonBlockingStatsDClient, StatsDClient}
 
@@ -11,14 +10,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.io.StdIn
 import scala.util.Random
-
+import org.slf4j.LoggerFactory
 
 object Main {
 
-  private val logger = Logger.getLogger("Theia")
+  private val logger = LoggerFactory.getLogger(Main.getClass)
 
-
-  case class Params(kafkaBroker: String, prefix: String, eventsPerSecond: Int, channels: Int, statSDHost: String)
+  case class Params(kafkaBroker: String, prefix: String,eventsPerSecond: Int, channels: Int, statSDHost: String)
 
   val system: ActorSystem = ActorSystem("Theia")
 
@@ -34,7 +32,6 @@ object Main {
 
   /** Main application. Creates topology and runs generators */
   def main(args: Array[String]): Unit = {
-
     val params = parseArgs(args)
     val statsDCClient: Option[StatsDClient] =
       if (params.statSDHost == "none") None
@@ -60,14 +57,17 @@ object Main {
     // Send RealTime job after 5 second once
     //      system.scheduler.scheduleOnce(5.second, rtJobGen, Tick)
 
+    logger.info("Application started")
     println(">>> Press ENTER to exit <<<")
     StdIn.readLine()
+    logger.info("Application stopped")
   }
 
   /** Create Data Generator Actor */
   def mkDataGen(id: Int, dataSink: ActorRef, eps: Int): ActorRef = {
     val channelId = s"theia-in-$id"
     val actor = system.actorOf(DataGen.props(channelId, dataSink, eps), s"data-gen-$id")
+    logger.info(s"Create channel $channelId with throughput $eps eps")
     // Send data every 1 second
     val startTime = Random.nextInt(1000)
     val resolution = 1
