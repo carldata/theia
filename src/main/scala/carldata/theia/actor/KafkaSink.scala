@@ -4,20 +4,20 @@ import java.util.Properties
 
 import akka.actor.{Actor, Props}
 import carldata.theia.actor.Messages.KMessage
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
+import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 import org.slf4j.LoggerFactory
 
 
 object KafkaSink {
-  private val logger = LoggerFactory.getLogger("Theia")
+  private val logger = LoggerFactory.getLogger(KafkaSink.getClass)
 
   def props(topic: String, broker: String): Props = Props(new KafkaSink(topic, broker))
 
   def initProps(brokers: String): Properties = {
     val props = new Properties()
-    props.put("bootstrap.servers", brokers)
-    props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
-    props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers)
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
     props
   }
 }
@@ -38,7 +38,7 @@ class KafkaSink(topic: String, brokers: String) extends Actor {
   }
 
   override def postStop(): Unit = {
-    println("close sink: " + topic)
+    logger.info("close sink: " + topic)
     producer.close()
   }
 }

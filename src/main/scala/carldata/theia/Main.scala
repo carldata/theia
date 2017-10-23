@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory
 
 object Main {
 
-  private val logger = LoggerFactory.getLogger("Theia")
+  private val logger = LoggerFactory.getLogger(Main.getClass)
 
   case class Params(kafkaBroker: String, prefix: String,eventsPerSecond: Int)
 
@@ -28,8 +28,6 @@ object Main {
 
   /** Main application. Creates topology and runs generators */
   def main(args: Array[String]): Unit = {
-    logger.info("Theia application started Again")
-    // print logback's internal status
 
     val params = parseArgs(args)
     // Kafka sink
@@ -44,13 +42,16 @@ object Main {
     // Send RealTime job after 5 second once
 //      system.scheduler.scheduleOnce(5.second, rtJobGen, Tick)
 
+    logger.info("Application started")
     println(">>> Press ENTER to exit <<<")
     StdIn.readLine()
+    logger.info("Application stopped")
   }
 
   /** Create Data Generator Actor */
-  def mkDataGen(id: Int, dataSink: ActorRef,eps: Int): ActorRef = {
+  def mkDataGen(id: Int, dataSink: ActorRef, eps: Int): ActorRef = {
     val channelId = s"theia-in-$id"
+    logger.info(s"Create channel $channelId with throughput $eps eps")
     val actor = system.actorOf(DataGen.props(channelId, dataSink,eps), s"data-gen-$id")
     // Send data every 1 second
     val startTime = Random.nextInt(1000)
