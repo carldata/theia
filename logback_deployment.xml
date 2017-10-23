@@ -11,7 +11,7 @@
     <logger name="ch.qos.logback" level="WARN"/>
 
     <appender name="GELF" class="de.siegmar.logbackgelf.GelfUdpAppender">
-        <graylogHost>10.58.75.124</graylogHost>
+        <graylogHost>127.0.0.1</graylogHost>
         <graylogPort>12201</graylogPort>
     </appender>
 
