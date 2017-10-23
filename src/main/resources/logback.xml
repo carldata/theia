@@ -10,14 +10,8 @@
     <logger name="org.apache.kafka" level="WARN"/>
     <logger name="ch.qos.logback" level="WARN"/>
 
-    <!--<appender name="GELF" class="de.siegmar.logbackgelf.GelfTcpAppender">-->
-        <!--<graylogHost>127.0.0.1</graylogHost>-->
-        <!--<graylogPort>12201</graylogPort>-->
-    <!--</appender>-->
-
     <root level="info">
         <appender-ref ref="STDOUT" />
-        <!--<appender-ref ref="GELF" />-->
     </root>
 
 </configuration>
