@@ -6,7 +6,7 @@ ENV Events_Per_Second 100
 
 WORKDIR /root
 ADD target/scala-2.12/theia.jar /root/theia.jar
-ADD logback_deployment.xml /root/logback_deployment.xml
-ADD entrypoint.sh /root/entrypoint.sh
+ADD etc/logback_deployment.xml /root/logback_deployment.xml
+ADD etc/entrypoint.sh /root/entrypoint.sh
 ENTRYPOINT ["/bin/sh","/root/entrypoint.sh"]
 
