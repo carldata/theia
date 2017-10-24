@@ -58,9 +58,6 @@ object Main {
     //      system.scheduler.scheduleOnce(5.second, rtJobGen, Tick)
 
     logger.info("Application started")
-    println(">>> Press ENTER to exit <<<")
-    StdIn.readLine()
-    logger.info("Application stopped")
   }
 
   /** Create Data Generator Actor */
