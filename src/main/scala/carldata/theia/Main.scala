@@ -2,7 +2,7 @@ package carldata.theia
 
 import akka.actor.{ActorRef, ActorSystem}
 import carldata.theia.actor.Messages.Tick
-import carldata.theia.actor.{DataGen, KafkaSink}
+import carldata.theia.actor.{BatchJobGen, DataGen, KafkaSink}
 import com.timgroup.statsd.{NonBlockingStatsDClient, StatsDClient}
 import org.slf4j.LoggerFactory
 
@@ -28,26 +28,24 @@ object Main {
     Params(kafka, prefix, if (eventsPerSecond <= 0) 1 else eventsPerSecond, if (channels <= 0) 1 else channels, statSDHost)
   }
 
+  def initStatsD(host: String): Option[StatsDClient] = {
+    if (host == "none") None
+    else Some( new NonBlockingStatsDClient("theia", host, 8125 ))
+  }
+
   /** Main application. Creates topology and runs generators */
   def main(args: Array[String]): Unit = {
     val params = parseArgs(args)
-    val statsDCClient: Option[StatsDClient] =
-      if (params.statSDHost == "none") None
-      else {
-        Some(
-          new NonBlockingStatsDClient(
-            "theia",
-            params.statSDHost,
-            8125
-          ))
-      }
+    val statsDCClient = initStatsD(params.statSDHost)
+    // Kafka sinks
+    val dataSink = system.actorOf(KafkaSink.props(params.prefix + "data", params.kafkaBroker, statsDCClient), "data-sink")
+    val batchSink = system.actorOf(KafkaSink.props(params.prefix + "hydra-batch", params.kafkaBroker, statsDCClient), "batch-sink")
 
-
-    // Kafka sink
-    val dataSink: ActorRef = system.actorOf(KafkaSink.props(params.prefix + "data", params.kafkaBroker, statsDCClient), "data-sink")
-
-    // Five device data generators
+    // Data generators
     for (i <- 1.to(params.channels)) yield mkDataGen(i, dataSink, params.eventsPerSecond)
+    val batchGen = system.actorOf(BatchJobGen.props(batchSink), s"batch-job-gen")
+    // Generate batch job every 10 seconds
+    system.scheduler.schedule(0.millis, 10.second, batchGen, Tick)
 
     logger.info("Application started")
   }
