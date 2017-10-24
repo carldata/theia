@@ -5,7 +5,7 @@ import java.util.{Collections, Properties}
 
 import akka.actor.ActorRef
 import carldata.theia.actor.Messages.KMessage
-import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord, KafkaConsumer}
+import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._

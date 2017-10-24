@@ -1,14 +1,12 @@
 package carldata.theia.actor
 
 import java.util.Properties
-import java.util.logging.Logger
 
 import akka.actor.{Actor, Props}
 import carldata.theia.actor.Messages.KMessage
+import com.timgroup.statsd.StatsDClient
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 import org.slf4j.LoggerFactory
-import com.timgroup.statsd.StatsDClient
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 
 
 object KafkaSink {
@@ -36,7 +34,7 @@ class KafkaSink(topic: String, brokers: String, statsDCClient: Option[StatsDClie
     case KMessage(k, v) =>
       v.map(recVal => {
         val data = new ProducerRecord[String, String](topic, k, recVal)
-        if (statsDCClient.isDefined) statsDCClient.get.incrementCounter("events.sent")
+        statsDCClient.foreach(_.incrementCounter("events.sent"))
         producer.send(data)
       })
   }
@@ -44,6 +42,6 @@ class KafkaSink(topic: String, brokers: String, statsDCClient: Option[StatsDClie
   override def postStop(): Unit = {
     logger.info("close sink: " + topic)
     producer.close()
-    if (statsDCClient.isDefined) statsDCClient.get.stop()
+    statsDCClient.foreach(_.stop())
   }
 }

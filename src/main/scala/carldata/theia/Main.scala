@@ -3,14 +3,12 @@ package carldata.theia
 import akka.actor.{ActorRef, ActorSystem}
 import carldata.theia.actor.Messages.Tick
 import carldata.theia.actor.{DataGen, KafkaSink}
-import carldata.theia.actor.{DataGen, KafkaSink}
 import com.timgroup.statsd.{NonBlockingStatsDClient, StatsDClient}
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.io.StdIn
 import scala.util.Random
-import org.slf4j.LoggerFactory
 
 object Main {
 
@@ -48,14 +46,9 @@ object Main {
     // Kafka sink
     val dataSink: ActorRef = system.actorOf(KafkaSink.props(params.prefix + "data", params.kafkaBroker, statsDCClient), "data-sink")
     val rtSink: ActorRef = system.actorOf(KafkaSink.props(params.prefix + "hydra-rt", params.kafkaBroker, statsDCClient), "rt-sink")
-    // Data generators
-    //val rtJobGen: ActorRef = system.actorOf(RTJobGen.props(rtSink), "rtjob-gen")
 
     // Five device data generators
     for (i <- 1.to(params.channels)) yield mkDataGen(i, dataSink, params.eventsPerSecond)
-
-    // Send RealTime job after 5 second once
-    //      system.scheduler.scheduleOnce(5.second, rtJobGen, Tick)
 
     logger.info("Application started")
   }

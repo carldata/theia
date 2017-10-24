@@ -15,7 +15,7 @@ object DataGen {
     Props(new DataGen(channelId, sinkActor,eps))
 }
 
-class DataGen(channelId: String, sinkActor: ActorRef,eps: Int) extends Actor {
+class DataGen(channelId: String, sinkActor: ActorRef, eps: Int) extends Actor {
 
   def receive: Actor.Receive = {
     case Tick =>

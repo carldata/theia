@@ -1,11 +1,10 @@
 package carldata.theia.actor
 
 import java.io.File
-import java.util.logging.Logger
 
 import akka.actor.{Actor, ActorRef, Props}
-import carldata.hs.RealTime.{AddAction, RealTimeJobRecord}
 import carldata.hs.RealTime.RealTimeJsonProtocol._
+import carldata.hs.RealTime.{AddAction, RealTimeJobRecord}
 import carldata.theia.actor.Messages.{KMessage, Tick}
 import spray.json._
 
@@ -19,8 +18,6 @@ object RTJobGen {
 
 class RTJobGen(sinkActor: ActorRef) extends Actor {
 
-  private val logger = Logger.getLogger("Theia")
-
   val jobs: Seq[RealTimeJobRecord] = {
     new File("config")
       .listFiles
@@ -32,7 +29,6 @@ class RTJobGen(sinkActor: ActorRef) extends Actor {
 
     case Tick =>
       jobs.foreach { j =>
-        logger.info("Send RealTime Job on channels: " + j.inputChannelIds.mkString(","))
         sinkActor ! KMessage("theia", List(j.toJson.compactPrint))
       }
 
