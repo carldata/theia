@@ -54,7 +54,7 @@ object Main {
   def mkDataGen(id: Int, dataSink: ActorRef, eps: Int): ActorRef = {
     val channelId = s"theia-in-$id"
     val actor = system.actorOf(DataGen.props(channelId, dataSink, eps), s"data-gen-$id")
-    logger.info(s"Create channel $channelId with throughput $eps eps")
+    logger.info(s"Create channel $channelId with $eps eps.")
     // Send data every 1 second
     val startTime = Random.nextInt(1000)
     val resolution = 1
