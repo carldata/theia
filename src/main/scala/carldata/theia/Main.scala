@@ -14,7 +14,7 @@ object Main {
 
   private val logger = LoggerFactory.getLogger(Main.getClass)
 
-  case class Params(kafkaBroker: String, prefix: String,eventsPerSecond: Int, channels: Int, statSDHost: String)
+  case class Params(kafkaBroker: String, prefix: String, eventsPerSecond: Int, channels: Int, statSDHost: String)
 
   val system: ActorSystem = ActorSystem("Theia")
 
@@ -45,7 +45,6 @@ object Main {
 
     // Kafka sink
     val dataSink: ActorRef = system.actorOf(KafkaSink.props(params.prefix + "data", params.kafkaBroker, statsDCClient), "data-sink")
-    val rtSink: ActorRef = system.actorOf(KafkaSink.props(params.prefix + "hydra-rt", params.kafkaBroker, statsDCClient), "rt-sink")
 
     // Five device data generators
     for (i <- 1.to(params.channels)) yield mkDataGen(i, dataSink, params.eventsPerSecond)
