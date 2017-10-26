@@ -32,16 +32,15 @@ class KafkaSink(topic: String, brokers: String, statsDCClient: Option[StatsDClie
 
   def receive: Actor.Receive = {
     case KMessage(k, v) =>
-      v.map(recVal => {
+      v.foreach { recVal =>
         val data = new ProducerRecord[String, String](topic, k, recVal)
-        statsDCClient.foreach(_.incrementCounter("events.sent"))
         producer.send(data)
-      })
+        statsDCClient.foreach(_.incrementCounter("events.sent"))
+      }
   }
 
   override def postStop(): Unit = {
     logger.info("close sink: " + topic)
     producer.close()
-    statsDCClient.foreach(_.stop())
   }
 }
