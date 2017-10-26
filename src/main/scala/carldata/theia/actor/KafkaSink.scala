@@ -31,8 +31,8 @@ class KafkaSink(topic: String, brokers: String, statsDCClient: Option[StatsDClie
   val producer = new KafkaProducer[String, String](initProps(brokers))
 
   def receive: Actor.Receive = {
-    case KMessage(k, v) =>
-      v.foreach { recVal =>
+    case KMessage(k, vs) =>
+      vs.foreach { recVal =>
         val data = new ProducerRecord[String, String](topic, k, recVal)
         producer.send(data)
         statsDCClient.foreach(_.incrementCounter("events.sent"))
