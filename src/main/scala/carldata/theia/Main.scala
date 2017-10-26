@@ -24,13 +24,18 @@ object Main {
     val prefix = args.find(_.contains("--prefix=")).map(_.substring(9)).getOrElse("")
     val eventsPerSecond = args.find(_.contains("--eps=")).map(_.substring(6)).getOrElse("1").trim().toInt
     val channels = args.find(_.contains("--channels=")).map(_.substring(11)).getOrElse("1").trim().toInt
-    val statSDHost = args.find(_.contains("--statSDHost=")).map(_.substring(13)).getOrElse("none")
+    val statSDHost = args.find(_.contains("--statSDHost=")).map(_.substring(13)).getOrElse("none").trim
     Params(kafka, prefix, if (eventsPerSecond <= 0) 1 else eventsPerSecond, if (channels <= 0) 1 else channels, statSDHost)
   }
 
   def initStatsD(host: String): Option[StatsDClient] = {
-    if (host == "none") None
-    else Some( new NonBlockingStatsDClient("theia", host, 8125 ))
+    try {
+      Some(new NonBlockingStatsDClient("theia", host, 8125))
+    }
+    catch {
+      case e: Exception => logger.warn(e.getMessage)
+        None
+    }
   }
 
   /** Main application. Creates topology and runs generators */
