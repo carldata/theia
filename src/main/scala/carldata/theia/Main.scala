@@ -3,7 +3,6 @@ package carldata.theia
 import akka.actor.{ActorRef, ActorSystem}
 import carldata.theia.actor.Messages.Tick
 import carldata.theia.actor.{BatchJobGen, DataGen, KafkaSink}
-import com.timgroup.statsd.{NonBlockingStatsDClient, StatsDClient}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -14,37 +13,32 @@ object Main {
 
   private val logger = LoggerFactory.getLogger(Main.getClass)
 
-  case class Params(kafkaBroker: String, prefix: String, eventsPerSecond: Int, channels: Int, statSDHost: String)
+  case class Params(kafkaBroker: String, prefix: String, eventsPerSecond: Int, channels: Int, statsDHost: String)
 
   val system: ActorSystem = ActorSystem("Theia")
 
-  /** Command line parser */
-  def parseArgs(args: Array[String]): Params = {
-    val kafka = args.find(_.contains("--kafka=")).map(_.substring(8)).getOrElse("localhost:9092")
-    val prefix = args.find(_.contains("--prefix=")).map(_.substring(9)).getOrElse("")
-    val eventsPerSecond = args.find(_.contains("--eps=")).map(_.substring(6)).getOrElse("1").trim().toInt
-    val channels = args.find(_.contains("--channels=")).map(_.substring(11)).getOrElse("1").trim().toInt
-    val statSDHost = args.find(_.contains("--statSDHost=")).map(_.substring(13)).getOrElse("none").trim
-    Params(kafka, prefix, if (eventsPerSecond <= 0) 1 else eventsPerSecond, if (channels <= 0) 1 else channels, statSDHost)
+  def stringArg(args: Array[String], key: String, default: String): String = {
+    val name = "--" + key + "="
+    args.find(_.contains(name)).map(_.substring(name.length)).getOrElse(default).trim
   }
 
-  def initStatsD(host: String): Option[StatsDClient] = {
-    try {
-      Some(new NonBlockingStatsDClient("theia", host, 8125))
-    }
-    catch {
-      case e: Exception => logger.warn(e.getMessage)
-        None
-    }
+  /** Command line parser */
+  def parseArgs(args: Array[String]): Params = {
+    val kafka = stringArg(args, "kafka", "localhost:9092")
+    val prefix = stringArg(args, "prefix", "")
+    val eventsPerSecond = stringArg(args, "eps", "1").toInt
+    val channels = stringArg(args, "channels", "1").toInt
+    val statsDHost = stringArg(args, "statsDHost", "none")
+    Params(kafka, prefix, math.max(eventsPerSecond, 1), math.max(channels, 1), statsDHost)
   }
 
   /** Main application. Creates topology and runs generators */
   def main(args: Array[String]): Unit = {
     val params = parseArgs(args)
-    val statsDCClient = initStatsD(params.statSDHost)
+    StatsD.init("theia", params.statsDHost)
     // Kafka sinks
-    val dataSink = system.actorOf(KafkaSink.props(params.prefix + "data", params.kafkaBroker, statsDCClient), "data-sink")
-    val batchSink = system.actorOf(KafkaSink.props(params.prefix + "hydra-batch", params.kafkaBroker, statsDCClient), "batch-sink")
+    val dataSink = system.actorOf(KafkaSink.props(params.prefix + "data", params.kafkaBroker), "data-sink")
+    val batchSink = system.actorOf(KafkaSink.props(params.prefix + "hydra-batch", params.kafkaBroker), "batch-sink")
 
     // Data generators
     for (i <- 1.to(params.channels)) yield mkDataGen(i, dataSink, params.eventsPerSecond)

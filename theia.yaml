@@ -1,0 +1,29 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: theia
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: theia
+    spec:
+      containers:
+      - name: theia-container
+        image: flowworks-carlsolutions.azurecr.io/flowworks/theia
+        env:
+        - name: Kafka_Broker
+          value: "prodkafka1:9092,prodkafka2:9092,prodkafka3:9092"
+        - name: Events_Per_Second
+          value: "10"
+        - name: Channels
+          value: "5"
+        - name: StatsD_Host
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+      dnsPolicy: ClusterFirst
+      hostNetwork: true
+      imagePullSecrets:
+      - name: regsecret

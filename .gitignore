@@ -3,3 +3,4 @@ target/
 *.iml
 docker_build.sh
 theia.yml
+theia.yaml
