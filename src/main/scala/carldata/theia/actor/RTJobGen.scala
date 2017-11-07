@@ -1,14 +1,10 @@
 package carldata.theia.actor
 
-import java.io.File
-
 import akka.actor.{Actor, ActorRef, Props}
 import carldata.hs.RealTime.RealTimeJsonProtocol._
-import carldata.hs.RealTime.{AddAction, RealTimeJobRecord}
+import carldata.hs.RealTime.{AddAction, RealTimeJobRecord, RemoveAction}
 import carldata.theia.actor.Messages.{KMessage, Tick}
 import spray.json._
-
-import scala.io.Source
 
 
 /** Generate jobs which should run in real time. */
@@ -18,28 +14,24 @@ object RTJobGen {
 
 class RTJobGen(sinkActor: ActorRef) extends Actor {
 
+  val script: String =
+    """
+      |def f(a: Number): Number = 2*a
+      |def main(xs: TimeSeries): TimeSeries = map(xs, f)
+    """.stripMargin.trim
+
   val jobs: Seq[RealTimeJobRecord] = {
-    new File("config")
-      .listFiles
-      .filter(x => x.isFile && x.getName.endsWith(".rt"))
-      .flatMap(f => parseConfig(f).toList)
+    val calculationId = "theia-1"
+    val inputChannels = Seq("theia-in-1")
+    val output = "theia-out-rt-1"
+    List(RealTimeJobRecord(RemoveAction, calculationId, script, inputChannels, output),
+      RealTimeJobRecord(AddAction, calculationId, script, inputChannels, output))
   }
 
   def receive: Actor.Receive = {
 
     case Tick =>
-      jobs.foreach { j =>
-        sinkActor ! KMessage("theia", List(j.toJson.compactPrint))
-      }
-
+      sinkActor ! KMessage("theia", jobs.map(_.toJson.compactPrint))
   }
 
-  def parseConfig(f: File): Option[RealTimeJobRecord] = {
-    val lines = Source.fromFile(f).getLines().filter(!_.startsWith("#")).toList
-    val calculationId = "theia-1"
-    val inputChannels = Seq(lines.headOption.getOrElse(""))
-    val output = lines.drop(1).headOption.getOrElse("")
-    val script = lines.drop(2).mkString("\n")
-    Some(RealTimeJobRecord(AddAction, calculationId, script, inputChannels, output))
-  }
 }

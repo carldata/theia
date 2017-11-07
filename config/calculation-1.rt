@@ -1,6 +1,0 @@
-# trigger
-theia-in-1
-# output
-theia-out-1
-# script:
-def main(t: DateTime, v: Number): Number = 25.4*v
