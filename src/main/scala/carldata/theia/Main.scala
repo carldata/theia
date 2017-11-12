@@ -2,7 +2,7 @@ package carldata.theia
 
 import akka.actor.{ActorRef, ActorSystem}
 import carldata.theia.actor.Messages.Tick
-import carldata.theia.actor.{BatchJobGen, DataGen, KafkaSink}
+import carldata.theia.actor.{RealTimeJobGen, DataGen, KafkaSink}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -38,13 +38,13 @@ object Main {
     StatsD.init("theia", params.statsDHost)
     // Kafka sinks
     val dataSink = system.actorOf(KafkaSink.props(params.prefix + "data", params.kafkaBroker), "data-sink")
-    val batchSink = system.actorOf(KafkaSink.props(params.prefix + "hydra-batch", params.kafkaBroker), "batch-sink")
+    val realTimeSink = system.actorOf(KafkaSink.props(params.prefix + "hydra-rt", params.kafkaBroker), "real-time-sink")
 
     // Data generators
     for (i <- 1.to(params.channels)) yield mkDataGen(i, dataSink, params.eventsPerSecond)
-    val batchGen = system.actorOf(BatchJobGen.props(batchSink), s"batch-job-gen")
-    // Generate batch job every 10 seconds
-    system.scheduler.schedule(0.millis, 10.second, batchGen, Tick)
+    val rtjGen = system.actorOf(RealTimeJobGen.props(realTimeSink), "real-time-job-gen")
+    // Generate real time job every 10 seconds
+    system.scheduler.schedule(0.millis, 10.second, rtjGen, Tick)
 
     logger.info("Application started")
   }
