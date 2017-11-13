@@ -4,6 +4,7 @@ import java.time.LocalDateTime
 
 import akka.actor.{Actor, ActorRef, Props}
 import carldata.hs.RealTime.{AddRealTimeJob, RealTimeJob}
+import carldata.hs.RealTime.RealTimeJsonProtocol._
 import carldata.theia.actor.Messages.{KMessage, Tick}
 import spray.json._
 
