@@ -32,6 +32,10 @@ object Main {
     Params(kafka, prefix, math.max(eventsPerSecond, 1), math.max(channels, 1), statsDHost)
   }
 
+  def buildTopology(): Unit = {
+
+  }
+
   /** Main application. Creates topology and runs generators */
   def main(args: Array[String]): Unit = {
     val params = parseArgs(args)

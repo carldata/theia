@@ -4,7 +4,7 @@ package carldata.theia
 /**
   * Model system and build test infrastructure based on this model
   */
-object SystemModel {
+object SystemSpec {
 
   trait Sink
 
