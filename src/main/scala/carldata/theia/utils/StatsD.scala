@@ -1,4 +1,4 @@
-package carldata.theia
+package carldata.theia.utils
 
 import com.timgroup.statsd.{NonBlockingStatsDClient, StatsDClient}
 import org.slf4j.LoggerFactory
