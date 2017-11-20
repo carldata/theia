@@ -25,7 +25,7 @@ class RealTimeJobGen(sinkActor: ActorRef) extends Actor {
     val now = LocalDateTime.now()
     val startDate = now.minusMinutes(2)
     val endDate = now.minusMinutes(1)
-    AddRealTimeJob(now.toString, script, Seq("theia-in-1"), "theia-out-1", startDate, endDate)
+    AddRealTimeJob("theia-1", script, Seq("theia-in-1"), "theia-out-1", startDate, endDate)
   }
 
   def receive: Actor.Receive = {

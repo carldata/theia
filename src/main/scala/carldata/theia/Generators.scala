@@ -5,7 +5,9 @@ import java.time.LocalDateTime
 import carldata.hs.Data.DataJsonProtocol._
 import carldata.hs.Data.DataRecord
 import carldata.hs.DeleteData.DeleteDataRecord
-import carldata.hs.RealTime.AddRealTimeJob
+import carldata.hs.DeleteData.DeleteDataJsonProtocol._
+import carldata.hs.RealTime.{AddRealTimeJob, RealTimeJob}
+import carldata.hs.RealTime.RealTimeJsonProtocol._
 import spray.json._
 
 
@@ -29,7 +31,7 @@ object Generators {
     val now = LocalDateTime.now()
     val startDate = now.minusMinutes(2)
     val endDate = now.minusMinutes(1)
-    val rec = AddRealTimeJob(now.toString, script, Seq(channelIn), channelOut, startDate, endDate)
+    val rec: RealTimeJob = AddRealTimeJob("theia-1", script, Seq(channelIn), channelOut, startDate, endDate)
     rec.toJson.compactPrint
   }
 
