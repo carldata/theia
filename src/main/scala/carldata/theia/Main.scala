@@ -28,13 +28,14 @@ object Main {
     val prefix = stringArg(args, "prefix", "")
     val eventsPerSecond = stringArg(args, "eps", "1").toInt
     val channels = stringArg(args, "channels", "1").toInt
-    val statsDHost = stringArg(args, "statsDHost", "none")
+    val statsDHost = stringArg(args, "statsd", "none")
     Params(kafka, prefix, math.max(eventsPerSecond, 1), math.max(channels, 1), statsDHost)
   }
 
   /** Main application. Creates topology and runs generators */
   def main(args: Array[String]): Unit = {
     val params = parseArgs(args)
+    logger.info(params.toString)
     StatsD.init("theia", params.statsDHost)
     // Kafka sinks
     val dataSink = system.actorOf(KafkaSink.props(params.prefix + "data", params.kafkaBroker), "data-sink")
