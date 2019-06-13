@@ -5,6 +5,7 @@ ENV KAFKA_BROKERS localhost:9092
 ENV EPS 10
 ENV CHANNELS 10
 ENV STATSD localhost
+ENV XMX 2048m
 
 WORKDIR /root
 ADD target/scala-2.12/theia.jar /root/theia.jar
