@@ -17,29 +17,17 @@ object Main {
 
   val system: ActorSystem = ActorSystem("Theia")
 
-  def stringArg(args: Array[String], key: String, default: String): String = {
-    val name = "--" + key + "="
-    args.find(_.contains(name)).map(_.substring(name.length)).getOrElse(default).trim
-  }
-
-  /** Command line parser */
-  def parseArgs(args: Array[String]): Params = {
-    val kafka = stringArg(args, "kafka", "localhost:9092")
-    val prefix = stringArg(args, "prefix", "")
-    val eventsPerSecond = stringArg(args, "eps", "1").toInt
-    val channels = stringArg(args, "channels", "1").toInt
-    val statsDHost = stringArg(args, "statsd", "none")
-    Params(kafka, prefix, math.max(eventsPerSecond, 1), math.max(channels, 1), statsDHost)
-  }
 
   /** Main application. Creates topology and runs generators */
   def main(args: Array[String]): Unit = {
-    val params = parseArgs(args)
+    val params = AppParams.parseArgs(args)
     logger.info(params.toString)
-    StatsD.init("theia", params.statsDHost)
+    val elastic = new Elastic("theia", params.elasticSearchUrl, params.elasticSearchPort)
     // Kafka sinks
-    val dataSink = system.actorOf(KafkaSink.props(params.prefix + "data", params.kafkaBroker), "data-sink")
-    val realTimeSink = system.actorOf(KafkaSink.props(params.prefix + "hydra-rt", params.kafkaBroker), "real-time-sink")
+    val dataSink = system.actorOf(KafkaSink.props(params.prefix + "data", params.kafkaBroker, elastic)
+      , "data-sink")
+    val realTimeSink = system.actorOf(KafkaSink.props(params.prefix + "hydra-rt", params.kafkaBroker, elastic)
+      , "real-time-sink")
 
     // Data generators
     for (i <- 1.to(params.channels)) yield mkDataGen(i, dataSink, params.eventsPerSecond)

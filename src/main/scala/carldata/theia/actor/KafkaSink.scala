@@ -3,7 +3,7 @@ package carldata.theia.actor
 import java.util.Properties
 
 import akka.actor.{Actor, Props}
-import carldata.theia.StatsD
+import carldata.theia.Elastic
 import carldata.theia.actor.Messages.KMessage
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 import org.slf4j.LoggerFactory
@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory
 object KafkaSink {
   private val logger = LoggerFactory.getLogger(KafkaSink.getClass.getName)
 
-  def props(topic: String, broker: String): Props = Props(new KafkaSink(topic, broker))
+  def props(topic: String, broker: String, elastic: Elastic): Props = Props(new KafkaSink(topic, broker, elastic))
 
   def initProps(brokers: String): Properties = {
     val props = new Properties()
@@ -23,7 +23,7 @@ object KafkaSink {
   }
 }
 
-class KafkaSink(topic: String, brokers: String) extends Actor {
+class KafkaSink(topic: String, brokers: String, elastic: Elastic) extends Actor {
 
   import KafkaSink._
 
@@ -35,7 +35,7 @@ class KafkaSink(topic: String, brokers: String) extends Actor {
       vs.foreach { recVal =>
         val data = new ProducerRecord[String, String](topic, k, recVal)
         producer.send(data)
-        StatsD.increment("events.sent")
+        elastic.increment("events.sent")
       }
   }
 

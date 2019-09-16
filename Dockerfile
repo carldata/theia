@@ -4,7 +4,8 @@ ENV SCALA_VERSION 2.12.3
 ENV KAFKA_BROKERS localhost:9092
 ENV EPS 10
 ENV CHANNELS 10
-ENV STATSD localhost
+ENV ELASTIC_SEARCH_URL = localhost
+ENV ELASTIC_SEARCH_PORT = 9200
 
 WORKDIR /root
 ADD target/scala-2.12/theia.jar /root/theia.jar
